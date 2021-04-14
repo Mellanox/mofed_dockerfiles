@@ -1,0 +1,33 @@
+#Currently this Dockerfile is supported on building on Ubuntu only.
+FROM ubuntu:18.04
+
+# avoiding interactively select the geographic area
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	perl \
+	tcsh tcl tk pciutils make lsof \
+	lsb-release \
+	libnuma1 \
+	python-libxml2 \
+	ethtool iproute2 net-tools \
+	openssh-server \
+	wget git \
+	pkg-config bison dpatch libgfortran3 \
+	kmod libnl-route-3-200 \
+	swig libelf1 automake libglib2.0-0 \
+	autoconf graphviz chrpath flex libnl-3-200 m4 \
+	debhelper autotools-dev gfortran libltdl-dev
+RUN apt install -y ca-certificates
+
+WORKDIR /tmp/
+
+RUN git clone https://github.com/esnet/iperf.git && cd iperf && ./configure --bindir=/usr/bin/ && make -j 8 && make install
+
+ENV MOFED_VER 5.3-1.0.0.1
+ENV OS_VER ubuntu18.04
+ENV PLATFORM x86_64
+
+RUN wget --quiet http://content.mellanox.com/ofed/MLNX_OFED-${MOFED_VER}/MLNX_OFED_LINUX-${MOFED_VER}-${OS_VER}-${PLATFORM}.tgz && \
+        tar -xvf MLNX_OFED_LINUX-${MOFED_VER}-${OS_VER}-${PLATFORM}.tgz && \
+        MLNX_OFED_LINUX-${MOFED_VER}-${OS_VER}-${PLATFORM}/mlnxofedinstall --user-space-only --without-fw-update --all --force
